@@ -1,4 +1,4 @@
-# 📦 Haider Traders Distribution System
+# 📦 Distribution System
 An end-to-end, offline-first business management and distribution tracking platform designed specifically for mobile field workers and central administrators.
 
 The system is engineered into three interconnected tiers:
