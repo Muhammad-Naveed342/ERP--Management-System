@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "name": "business-app",
+    "slug": "business-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./mobile-app/assets/images/icon.png",
+    "scheme": "businessapp",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./mobile-app/assets/images/android-icon-foreground.png",
+        "backgroundImage": "./mobile-app/assets/images/android-icon-background.png",
+        "monochromeImage": "./mobile-app/assets/images/android-icon-monochrome.png"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./mobile-app/assets/images/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./mobile-app/assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff",
+          "dark": {
+            "backgroundColor": "#000000"
+          }
+        }
+      ],
+      "expo-sqlite"
+    ],
+    "experiments": {
+      "reactCompiler": true
+    },
+    "extra": {
+      "apiBase": "http://10.135.213.223:8000/api/v1"
+    }
+  }
+}
