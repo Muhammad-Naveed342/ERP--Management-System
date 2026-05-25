@@ -21,7 +21,7 @@ def create_shop(
     shop = db.query(Shop).filter(Shop.shop_name == shop_in.shop_name).first()
     if shop:
         raise HTTPException(status_code=400, detail="Shop already exists.")
-    shop = Shop(shop_name=shop_in.shop_name, location=shop_in.location)
+    shop = Shop(shop_name=shop_in.shop_name, location=shop_in.location, mobile_phone=shop_in.mobile_phone)
     db.add(shop)
     db.commit()
     db.refresh(shop)
@@ -67,6 +67,8 @@ def update_shop(
         shop.shop_name = shop_in.shop_name
     if shop_in.location is not None:
         shop.location = shop_in.location
+    if shop_in.mobile_phone is not None:
+        shop.mobile_phone = shop_in.mobile_phone
     db.add(shop)
     db.commit()
     db.refresh(shop)

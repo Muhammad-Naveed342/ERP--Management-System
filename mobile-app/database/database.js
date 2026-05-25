@@ -375,3 +375,13 @@ export async function countMasterRows() {
     items: i?.c ?? 0,
   };
 }
+
+export async function deleteLocalOrder(localId) {
+  const db = await initDatabase();
+  await db.runAsync(`DELETE FROM orders_local WHERE local_id = ?`, [localId]);
+}
+
+export async function deleteLocalSale(localId) {
+  const db = await initDatabase();
+  await db.runAsync(`DELETE FROM sales_local WHERE local_id = ?`, [localId]);
+}

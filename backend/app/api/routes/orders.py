@@ -26,15 +26,16 @@ def create_order(
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
 
-    unit_price = resolve_unit_price(
-        db, 
-        order_in.item_id, 
-        order_in.unit_type, 
-        item.price, 
-        item.pieces_per_carton, 
-        "retail"
+    resolved_price = resolve_unit_price(
+        db,
+        order_in.item_id,
+        order_in.unit_type,
+        item.price,
+        item.pieces_per_carton,
+        order_in.price_tier or "retail"
     )
-    total_price = unit_price * order_in.quantity
+    price_per_unit = order_in.unit_price if order_in.unit_price is not None else resolved_price
+    total_price = price_per_unit * order_in.quantity
 
     now = datetime.utcnow()
     order = Order(
@@ -44,7 +45,7 @@ def create_order(
         total_price=total_price,
         unit_type=order_in.unit_type,
         sync_id=order_in.sync_id,
-        created_by=current_user.id,
+        created_by=order_in.created_by if (order_in.created_by and current_user.role == "admin") else current_user.id,
         timestamp=order_in.timestamp or now,
         synced_at=now,
     )
@@ -92,10 +93,12 @@ def read_orders(
             sync_id=o.sync_id,
             timestamp=o.timestamp,
             total_price=o.total_price,
+            unit_price=(o.total_price / o.quantity if o.quantity else 0),
             unit_type=o.unit_type,
             created_by=o.created_by,
             synced_at=o.synced_at,
             shop_name=o.shop.shop_name if o.shop else None,
+            shop_location=o.shop.location if o.shop else None,
             item_name=o.item.item_name if o.item else None,
             created_by_name=o.user.username if o.user else "Unknown",
         )

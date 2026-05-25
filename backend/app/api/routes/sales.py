@@ -32,7 +32,7 @@ def create_sale(
         sale_in.unit_type, 
         item.price, 
         item.pieces_per_carton, 
-        "wholesale"
+        sale_in.price_tier or "wholesale"
     )
     total_price = unit_price * sale_in.quantity
 
@@ -46,7 +46,7 @@ def create_sale(
         total_price=total_price,
         unit_type=sale_in.unit_type,
         sync_id=sale_in.sync_id,
-        created_by=current_user.id,
+        created_by=sale_in.created_by if (sale_in.created_by and current_user.role == "admin") else current_user.id,
         timestamp=sale_in.timestamp or now,
         synced_at=now,
     )
@@ -100,6 +100,7 @@ def read_sales(
             created_by=s.created_by,
             synced_at=s.synced_at,
             shop_name=s.shop.shop_name if s.shop else None,
+            shop_location=s.shop.location if s.shop else None,
             item_name=s.item.item_name if s.item else None,
             created_by_name=s.user.username if s.user else "Unknown",
         )

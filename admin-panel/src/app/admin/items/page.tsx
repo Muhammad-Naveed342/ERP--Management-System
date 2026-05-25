@@ -8,28 +8,15 @@ type Company = {
   name: string;
 };
 
-type PriceType = {
-  id: number;
-  code: string;
-  name: string;
-};
-
-type ItemPrice = {
-  id: number;
-  item_id: number;
-  price_type_id: number;
-  price: number;
-};
-
 type Item = {
   id: number;
   item_name: string;
-  price: number; // base fallback price
+  price: number; 
+  price_per_item?: number;
+  quantity: number;
   company_id?: number;
   company_name?: string;
   image_url?: string;
-  pieces_per_carton?: number;
-  prices: ItemPrice[];
 };
 
 export default function ItemsAdmin() {
@@ -40,11 +27,9 @@ export default function ItemsAdmin() {
   const [itemName, setItemName] = useState("");
   const [itemCompanyId, setItemCompanyId] = useState<string>("");
   const [itemImageUrl, setItemImageUrl] = useState("");
-  const [piecesPerCarton, setPiecesPerCarton] = useState<string>("12");
-
-  // Price Types & Custom Prices State
-  const [priceTypes, setPriceTypes] = useState<PriceType[]>([]);
-  const [pricesInput, setPricesInput] = useState<{ [key: number]: string }>({});
+  const [itemPrice, setItemPrice] = useState<string>("");
+  const [itemPricePerItem, setItemPricePerItem] = useState<string>("");
+  const [itemQuantity, setItemQuantity] = useState<string>("0");
 
   // Companies State
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -65,15 +50,12 @@ export default function ItemsAdmin() {
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Load both items, companies, and price types
+  // Load both items and companies
   async function loadData() {
     setErr("");
     try {
       const fetchedCompanies = await apiJson<Company[]>("/companies/");
       setCompanies(fetchedCompanies);
-
-      const fetchedPriceTypes = await apiJson<PriceType[]>("/price-types/");
-      setPriceTypes(fetchedPriceTypes);
 
       // Load items with current filter
       let itemsUrl = "/items/";
@@ -91,13 +73,6 @@ export default function ItemsAdmin() {
   useEffect(() => {
     loadData();
   }, [selectedCompanyFilter]);
-
-  // Set default company & clear inputs once companies list is loaded
-  useEffect(() => {
-    if (companies.length > 0 && !itemCompanyId) {
-      setItemCompanyId(String(companies[0].id));
-    }
-  }, [companies, itemCompanyId]);
 
   // Handle Image Upload to backend
   async function onImageUpload(e: ChangeEvent<HTMLInputElement>) {
@@ -132,43 +107,35 @@ export default function ItemsAdmin() {
     }
   }
 
-  // Create Product with custom pricing list and image
+  // Create Product 
   async function onCreateProduct(e: FormEvent) {
     e.preventDefault();
-    if (!itemName.trim() || !itemCompanyId) {
-      setErr("Product name and Company selection are required.");
+    if (!itemName.trim() || !itemPrice) {
+      setErr("Product name and Price are required.");
       return;
     }
     setErr("");
     setLoading(true);
     try {
-      // Build the nested prices list
-      const pricesList = Object.entries(pricesInput).map(([typeId, val]) => ({
-        price_type_id: parseInt(typeId),
-        price: parseFloat(val) || 0
-      }));
-
-      // Base price defaults to the 'retail' price or the first input price
-      const retailTypeId = priceTypes.find(pt => pt.code === 'retail')?.id;
-      const basePrice = parseFloat(pricesInput[retailTypeId || 0] || "0") || 0;
-
       await apiJson("/items/", {
         method: "POST",
         body: JSON.stringify({
           item_name: itemName.trim(),
-          price: basePrice,
-          company_id: parseInt(itemCompanyId),
+          price: parseFloat(itemPrice) || 0,
+          price_per_item: itemPricePerItem ? parseFloat(itemPricePerItem) : null,
+          company_id: itemCompanyId ? parseInt(itemCompanyId) : null,
           image_url: itemImageUrl || null,
-          pieces_per_carton: parseInt(piecesPerCarton) || 12,
-          prices: pricesList,
+          quantity: parseInt(itemQuantity) || 0,
         }),
       });
 
       // Clear input fields
       setItemName("");
       setItemImageUrl("");
-      setPiecesPerCarton("12");
-      setPricesInput({});
+      setItemPrice("");
+      setItemPricePerItem("");
+      setItemQuantity("0");
+      setItemCompanyId("");
       await loadData();
     } catch (e: unknown) {
       setErr(String(e instanceof Error ? e.message : e));
@@ -236,6 +203,9 @@ export default function ItemsAdmin() {
       if (selectedCompanyFilter === id) {
         setSelectedCompanyFilter("all");
       }
+      if (parseInt(itemCompanyId) === id) {
+        setItemCompanyId("");
+      }
       await loadData();
     } catch (e: unknown) {
       setErr(String(e instanceof Error ? e.message : e));
@@ -255,7 +225,7 @@ export default function ItemsAdmin() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Product Catalog</h1>
-          <p className="text-slate-500 font-medium">Manage distribution items, link companies, and set multi-tier prices.</p>
+          <p className="text-slate-500 font-medium">Manage distribution items, stock quantities, and link optional companies.</p>
         </div>
 
         {/* Tab Selector */}
@@ -263,8 +233,8 @@ export default function ItemsAdmin() {
           <button
             onClick={() => setActiveTab("products")}
             className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === "products"
-                ? "bg-white text-indigo-600 shadow-sm"
-                : "text-slate-600 hover:text-slate-900"
+              ? "bg-white text-indigo-600 shadow-sm"
+              : "text-slate-600 hover:text-slate-900"
               }`}
           >
             Products
@@ -272,8 +242,8 @@ export default function ItemsAdmin() {
           <button
             onClick={() => setActiveTab("companies")}
             className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === "companies"
-                ? "bg-white text-indigo-600 shadow-sm"
-                : "text-slate-600 hover:text-slate-900"
+              ? "bg-white text-indigo-600 shadow-sm"
+              : "text-slate-600 hover:text-slate-900"
               }`}
           >
             Company Manager
@@ -302,8 +272,8 @@ export default function ItemsAdmin() {
               <button
                 onClick={() => setSelectedCompanyFilter("all")}
                 className={`px-5 py-3 rounded-2xl font-bold text-sm transition-all ${selectedCompanyFilter === "all"
-                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200"
-                    : "bg-white text-slate-700 hover:bg-slate-50 border border-slate-200"
+                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200"
+                  : "bg-white text-slate-700 hover:bg-slate-50 border border-slate-200"
                   }`}
               >
                 All Companies
@@ -313,16 +283,13 @@ export default function ItemsAdmin() {
                   key={c.id}
                   onClick={() => setSelectedCompanyFilter(c.id)}
                   className={`px-5 py-3 rounded-2xl font-bold text-sm transition-all ${selectedCompanyFilter === c.id
-                      ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200"
-                      : "bg-white text-slate-700 hover:bg-slate-50 border border-slate-200"
+                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200"
+                    : "bg-white text-slate-700 hover:bg-slate-50 border border-slate-200"
                     }`}
                 >
                   {c.name}
                 </button>
               ))}
-              {companies.length === 0 && (
-                <span className="text-sm italic text-slate-400 py-2">Create a company to unlock separate filter lists.</span>
-              )}
             </div>
           </div>
 
@@ -333,7 +300,7 @@ export default function ItemsAdmin() {
           >
             <div className="border-b border-slate-100 pb-4">
               <h2 className="text-xl font-bold text-slate-900">Add New Product</h2>
-              <p className="text-slate-500 text-xs mt-0.5">Define name, choose manufacturer, upload image, and assign specific pricing tiers.</p>
+              <p className="text-slate-500 text-xs mt-0.5">Define name, optional company, simple price, quantity, and upload an image.</p>
             </div>
 
             {/* Row 1: Name, Company, and Image Upload */}
@@ -353,22 +320,19 @@ export default function ItemsAdmin() {
 
               {/* Company selection */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Company</label>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Company (Optional)</label>
                 <div className="relative">
                   <select
                     className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all font-semibold appearance-none pr-10"
                     value={itemCompanyId}
                     onChange={(e) => setItemCompanyId(e.target.value)}
-                    required
                   >
+                    <option value="">No Company / General</option>
                     {companies.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
                       </option>
                     ))}
-                    {companies.length === 0 && (
-                      <option value="" disabled>No Companies available</option>
-                    )}
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -380,7 +344,7 @@ export default function ItemsAdmin() {
 
               {/* Image Upload Zone */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Product Image</label>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Product Image (Optional)</label>
                 <div className="relative h-14 bg-slate-50 border border-slate-200 rounded-2xl flex items-center px-4 justify-between overflow-hidden">
                   {uploading ? (
                     <span className="text-slate-400 text-xs font-bold animate-pulse">Uploading image...</span>
@@ -428,44 +392,58 @@ export default function ItemsAdmin() {
               </div>
             </div>
 
-            {/* Row 2: Pricing Tiers and Submit */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-              {/* Pieces Per Carton */}
+            {/* Row 2: Price, Quantity and Submit */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+              
+              {/* Price Per Box */}
               <div className="space-y-1.5">
                 <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-                  Pieces Per Carton
+                  Price Per Box (Rs.)
                 </label>
                 <input
-                  type="number"
                   className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all placeholder:text-slate-400 font-semibold"
-                  placeholder="e.g. 12"
-                  value={piecesPerCarton}
-                  onChange={(e) => setPiecesPerCarton(e.target.value)}
-                  min="1"
+                  placeholder="0.00"
+                  value={itemPrice}
+                  onChange={(e) => setItemPrice(e.target.value)}
+                  inputMode="decimal"
                   required
                 />
               </div>
 
-              {priceTypes.map((type) => (
-                <div key={type.id} className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-                    {type.name} (Rs.)
-                  </label>
-                  <input
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all placeholder:text-slate-400 font-semibold"
-                    placeholder="0.00"
-                    value={pricesInput[type.id] || ""}
-                    onChange={(e) => setPricesInput({ ...pricesInput, [type.id]: e.target.value })}
-                    inputMode="decimal"
-                    required
-                  />
-                </div>
-              ))}
+              {/* Price per item */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
+                  Price Per Item (Opt)
+                </label>
+                <input
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all placeholder:text-slate-400 font-semibold"
+                  placeholder="0.00"
+                  value={itemPricePerItem}
+                  onChange={(e) => setItemPricePerItem(e.target.value)}
+                  inputMode="decimal"
+                />
+              </div>
+
+              {/* Purchase Quantity */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
+                  Purchase Quantity
+                </label>
+                <input
+                  type="number"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all placeholder:text-slate-400 font-semibold"
+                  placeholder="0"
+                  value={itemQuantity}
+                  onChange={(e) => setItemQuantity(e.target.value)}
+                  min="0"
+                  required
+                />
+              </div>
 
               <div>
                 <button
                   type="submit"
-                  disabled={loading || uploading || companies.length === 0}
+                  disabled={loading || uploading}
                   className="w-full h-14 rounded-2xl bg-indigo-600 text-white font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 hover:shadow-indigo-200 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -480,17 +458,6 @@ export default function ItemsAdmin() {
           {/* Product Cards */}
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {items.map((i, idx) => {
-              // Extract Retail and Wholesale prices
-              const retailTypeId = priceTypes.find(pt => pt.code === 'retail')?.id;
-              const wholesaleTypeId = priceTypes.find(pt => pt.code === 'wholesale')?.id;
-              const retailCartonTypeId = priceTypes.find(pt => pt.code === 'retail_carton')?.id;
-              const wholesaleCartonTypeId = priceTypes.find(pt => pt.code === 'wholesale_carton')?.id;
-
-              const retailPrice = i.prices.find(p => p.price_type_id === retailTypeId)?.price ?? i.price;
-              const wholesalePrice = i.prices.find(p => p.price_type_id === wholesaleTypeId)?.price ?? i.price;
-              const retailCartonPrice = i.prices.find(p => p.price_type_id === retailCartonTypeId)?.price ?? (retailPrice * (i.pieces_per_carton || 12));
-              const wholesaleCartonPrice = i.prices.find(p => p.price_type_id === wholesaleCartonTypeId)?.price ?? (wholesalePrice * (i.pieces_per_carton || 12));
-
               return (
                 <div
                   key={i.id}
@@ -500,7 +467,7 @@ export default function ItemsAdmin() {
                     {/* Header: Company & SKU */}
                     <div className="flex items-center justify-between mb-4">
                       <span className="text-[10px] font-extrabold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-xl uppercase tracking-wider">
-                        {i.company_name || "Unassigned"}
+                        {i.company_name || "General"}
                       </span>
                       <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-lg">Product {idx + 1}</span>
                     </div>
@@ -532,30 +499,21 @@ export default function ItemsAdmin() {
                       {i.item_name}
                     </h3>
 
-                    {/* Live Pricing Tiers Grid */}
+                    {/* Basic Info */}
                     <div className="mt-5 p-3.5 bg-slate-50/50 rounded-2xl border border-slate-100 space-y-2">
-                      <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest pb-1 border-b border-slate-200/50 mb-1">
-                        PER PIECE
-                      </div>
                       <div className="flex justify-between items-center text-xs font-bold">
-                        <span className="text-slate-400">Retail Price:</span>
-                        <span className="text-slate-900 font-extrabold">Rs. {Number(retailPrice).toFixed(2)}</span>
+                        <span className="text-slate-400">Price Per Box:</span>
+                        <span className="text-slate-900 font-extrabold">Rs. {Number(i.price).toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between items-center text-xs font-bold pt-1.5 pb-2 border-b border-slate-200/50">
-                        <span className="text-indigo-500">Wholesale Price:</span>
-                        <span className="text-indigo-600 font-extrabold">Rs. {Number(wholesalePrice).toFixed(2)}</span>
-                      </div>
-
-                      <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest pt-1 pb-1 border-b border-slate-200/50 mb-1">
-                        PER CARTON ({i.pieces_per_carton} Pieces)
-                      </div>
-                      <div className="flex justify-between items-center text-xs font-bold">
-                        <span className="text-slate-400">Retail Carton:</span>
-                        <span className="text-slate-900 font-extrabold">Rs. {Number(retailCartonPrice).toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-xs font-bold pt-1.5">
-                        <span className="text-indigo-500">Wholesale Carton:</span>
-                        <span className="text-indigo-600 font-extrabold">Rs. {Number(wholesaleCartonPrice).toFixed(2)}</span>
+                      {i.price_per_item !== null && i.price_per_item !== undefined && (
+                        <div className="flex justify-between items-center text-xs font-bold pt-1.5 border-t border-slate-200/50 mt-1">
+                          <span className="text-slate-400">Price Per Item:</span>
+                          <span className="text-slate-900 font-extrabold">Rs. {Number(i.price_per_item).toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center text-xs font-bold pt-1.5 border-t border-slate-200/50 mt-1">
+                        <span className="text-indigo-500">Purchase Quantity:</span>
+                        <span className="text-indigo-600 font-extrabold">{i.quantity}</span>
                       </div>
                     </div>
                   </div>
@@ -610,7 +568,7 @@ export default function ItemsAdmin() {
             >
               <div>
                 <h2 className="text-xl font-bold text-slate-900">Add New Company</h2>
-                <p className="text-slate-500 text-xs mt-1">Register companies to structure your product catalogs.</p>
+                <p className="text-slate-500 text-xs mt-1">Register optional companies to structure your product catalogs.</p>
               </div>
 
               <div className="space-y-1.5">
@@ -718,7 +676,7 @@ export default function ItemsAdmin() {
 
                 {companies.length === 0 && (
                   <div className="p-16 text-center italic text-slate-400 font-medium">
-                    No companies created yet. Register your first company on the left.
+                    No companies created yet. You can create products without them, or register companies here.
                   </div>
                 )}
               </div>

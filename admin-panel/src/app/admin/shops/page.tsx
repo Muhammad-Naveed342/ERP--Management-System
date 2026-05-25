@@ -3,12 +3,13 @@
 import { useEffect, useState, FormEvent } from "react";
 import { apiJson } from "@/lib/api";
 
-type Shop = { id: number; shop_name: string; location?: string | null };
+type Shop = { id: number; shop_name: string; location?: string | null; mobile_phone?: string | null };
 
 export default function ShopsAdmin() {
   const [rows, setRows] = useState<Shop[]>([]);
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
+  const [mobilePhone, setMobilePhone] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -35,11 +36,13 @@ export default function ShopsAdmin() {
         method: "POST",
         body: JSON.stringify({ 
           shop_name: name.trim(),
-          location: location.trim() || null
+          location: location.trim() || null,
+          mobile_phone: mobilePhone.trim() || null
         }),
       });
       setName("");
       setLocation("");
+      setMobilePhone("");
       await load();
     } catch (e: unknown) {
       setErr(String(e instanceof Error ? e.message : e));
@@ -88,7 +91,7 @@ export default function ShopsAdmin() {
 
       <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm w-full">
         <form onSubmit={onCreate} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1">
               <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Shop Name</label>
               <input
@@ -106,6 +109,15 @@ export default function ShopsAdmin() {
                 placeholder="e.g. Main Bazar, Lahore"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Mobile Phone</label>
+              <input
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all placeholder:text-slate-400 font-semibold"
+                placeholder="e.g. 0300-1234567"
+                value={mobilePhone}
+                onChange={(e) => setMobilePhone(e.target.value)}
               />
             </div>
           </div>
@@ -142,6 +154,14 @@ export default function ShopsAdmin() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                     {s.location}
+                  </div>
+                )}
+                {s.mobile_phone && (
+                  <div className="text-xs text-slate-600 font-bold mt-1 flex items-center gap-1 bg-slate-50 px-2.5 py-1 rounded-xl w-fit">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                    {s.mobile_phone}
                   </div>
                 )}
                 <div className="text-xs text-indigo-600 font-extrabold uppercase tracking-wider mt-2 bg-indigo-50 px-3 py-1 rounded-xl w-fit">

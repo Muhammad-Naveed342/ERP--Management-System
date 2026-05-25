@@ -11,6 +11,8 @@ class SaleBase(BaseModel):
     sync_id: Optional[str] = None
     timestamp: Optional[datetime] = None
     unit_type: str = "piece"
+    price_tier: Optional[str] = "wholesale"
+    created_by: Optional[int] = None
 
 class SaleCreate(SaleBase):
     pass
@@ -22,6 +24,7 @@ class Sale(SaleBase):
     timestamp: datetime
     synced_at: Optional[datetime] = None
     shop_name: Optional[str] = None
+    shop_location: Optional[str] = None
     item_name: Optional[str] = None
     created_by_name: Optional[str] = None
 

@@ -40,6 +40,8 @@ export default function ReportsPage() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [orderDate, setOrderDate] = useState("");
   const [saleDate, setSaleDate] = useState("");
+  const [orderTakerFilter, setOrderTakerFilter] = useState("");
+  const [salesmanFilter, setSalesmanFilter] = useState("");
   const [printType, setPrintType] = useState<"orders" | "sales" | null>(null);
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(true);
@@ -62,6 +64,10 @@ export default function ReportsPage() {
   const getSelectedOrders = () => {
     if (!orderDate) return [];
     return orders.filter((o) => {
+      if (orderTakerFilter && !(o.created_by_name || "").toLowerCase().includes(orderTakerFilter.toLowerCase())) {
+        return false;
+      }
+
       const dt = o.synced_at || o.timestamp;
       let normalizedDt = dt;
       if (!dt.endsWith("Z") && !dt.includes("+") && dt.includes("T")) {
@@ -92,6 +98,10 @@ export default function ReportsPage() {
   const getSelectedSales = () => {
     if (!saleDate) return [];
     return sales.filter((s) => {
+      if (salesmanFilter && !(s.created_by_name || "").toLowerCase().includes(salesmanFilter.toLowerCase())) {
+        return false;
+      }
+
       const dt = s.synced_at || s.timestamp;
       let normalizedDt = dt;
       if (!dt.endsWith("Z") && !dt.includes("+") && dt.includes("T")) {
@@ -416,12 +426,19 @@ export default function ReportsPage() {
               </h2>
               <p className="text-sm text-slate-500 font-medium mt-1">Export high-fidelity spreadsheet logs or print invoice lists for dispatch drivers.</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              <input
+                type="text"
+                placeholder="Filter by Order Taker..."
+                value={orderTakerFilter}
+                onChange={(e) => setOrderTakerFilter(e.target.value)}
+                className="px-4 py-2.5 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-bold text-slate-700 w-full sm:w-auto"
+              />
               <input
                 type="date"
                 value={orderDate}
                 onChange={(e) => setOrderDate(e.target.value)}
-                className="px-4 py-2.5 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-bold text-slate-700"
+                className="px-4 py-2.5 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-bold text-slate-700 w-full sm:w-auto"
               />
             </div>
           </div>
@@ -512,12 +529,19 @@ export default function ReportsPage() {
               </h2>
               <p className="text-sm text-slate-500 font-medium mt-1">Track cash income realizations and outstanding customer credit (loans) for your salesmen.</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              <input
+                type="text"
+                placeholder="Filter by Salesman..."
+                value={salesmanFilter}
+                onChange={(e) => setSalesmanFilter(e.target.value)}
+                className="px-4 py-2.5 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-bold text-slate-700 w-full sm:w-auto"
+              />
               <input
                 type="date"
                 value={saleDate}
                 onChange={(e) => setSaleDate(e.target.value)}
-                className="px-4 py-2.5 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-bold text-slate-700"
+                className="px-4 py-2.5 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-bold text-slate-700 w-full sm:w-auto"
               />
             </div>
           </div>

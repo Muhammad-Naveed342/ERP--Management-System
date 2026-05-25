@@ -22,6 +22,7 @@ import {
   listItems,
   listLocalSales,
   listShops,
+  deleteLocalSale,
 } from "../database/database";
 import { isOnline, pushOutbox } from "../services/syncEngine";
 
@@ -408,17 +409,45 @@ export default function SalesManScreen({ user, onBack }) {
     }
   };
 
+  const handleDeleteSale = (localId) => {
+    Alert.alert("Delete Sale", "Are you sure you want to delete this locally saved sale?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await deleteLocalSale(localId);
+            await refreshList();
+          } catch (e) {
+            Alert.alert("Error", String(e));
+          }
+        },
+      },
+    ]);
+  };
+
   const renderRow = ({ item: row }) => (
     <View style={styles.card}>
       <View style={styles.cardTop}>
-        <Text style={styles.shopName}>{row.shop_name}</Text>
-        <View
-          style={[
-            styles.badge,
-            { backgroundColor: row.synced ? "#DCFCE7" : "#FEF3C7" },
-          ]}
-        >
-          <Text style={styles.badgeText}>{row.synced ? "Synced" : "Pending"}</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.shopName}>{row.shop_name}</Text>
+          <Text style={{ fontSize: 11, color: "#6B7280", marginTop: 2 }}>
+            {new Date(row.created_at).toLocaleString()}
+          </Text>
+        </View>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+          <View
+            style={[
+              styles.badge,
+              { backgroundColor: row.synced ? "#DCFCE7" : "#FEF3C7" },
+            ]}
+          >
+            <Text style={styles.badgeText}>{row.synced ? "Synced" : "Pending"}</Text>
+          </View>
+          <TouchableOpacity onPress={() => handleDeleteSale(row.local_id)}>
+            <Ionicons name="trash-outline" size={20} color="#EF4444" />
+          </TouchableOpacity>
         </View>
       </View>
       <Text style={styles.itemName}>{row.item_name}</Text>

@@ -7,3 +7,4 @@ class Shop(Base):
     id = Column(Integer, primary_key=True, index=True)
     shop_name = Column(String, unique=True, index=True, nullable=False)
     location = Column(String, nullable=True)
+    mobile_phone = Column(String, nullable=True)

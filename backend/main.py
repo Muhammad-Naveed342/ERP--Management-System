@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.api.routes import auth, users, shops, items, orders, sales, sync, reports, companies, price_types
+from app.api.routes import auth, users, shops, items, orders, sales, sync, reports, companies, price_types, agencies
 from app.db.database import engine
 from app.db.base import Base
 from app.db.database import SessionLocal
@@ -44,6 +44,7 @@ app.include_router(orders.router, prefix=f"{settings.API_V1_STR}/orders", tags=[
 app.include_router(sales.router, prefix=f"{settings.API_V1_STR}/sales", tags=["sales"])
 app.include_router(sync.router, prefix=f"{settings.API_V1_STR}/sync", tags=["sync"])
 app.include_router(reports.router, prefix=f"{settings.API_V1_STR}/reports", tags=["reports"])
+app.include_router(agencies.router, prefix=f"{settings.API_V1_STR}/agencies", tags=["agencies"])
 
 
 @app.get("/")

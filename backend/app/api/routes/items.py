@@ -52,9 +52,11 @@ def create_item(
     item = Item(
         item_name=item_in.item_name, 
         price=item_in.price, 
+        price_per_item=item_in.price_per_item,
         company_id=item_in.company_id,
         image_url=item_in.image_url,
-        pieces_per_carton=item_in.pieces_per_carton
+        pieces_per_carton=item_in.pieces_per_carton,
+        quantity=item_in.quantity
     )
     db.add(item)
     db.flush() # Resolve item.id
@@ -117,12 +119,16 @@ def update_item(
         item.item_name = item_in.item_name
     if item_in.price is not None:
         item.price = item_in.price
+    if item_in.price_per_item is not None:
+        item.price_per_item = item_in.price_per_item
     if item_in.company_id is not None:
         item.company_id = item_in.company_id
     if item_in.image_url is not None:
       item.image_url = item_in.image_url
     if item_in.pieces_per_carton is not None:
       item.pieces_per_carton = item_in.pieces_per_carton
+    if item_in.quantity is not None:
+      item.quantity = item_in.quantity
         
     # Update associated pricing if provided
     if item_in.prices is not None:
